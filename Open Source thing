@@ -1,0 +1,88 @@
+import json
+import os
+import queue
+import subprocess
+import sys
+import threading
+import time
+import tkinter as tk
+import tkinter.font as tkfont
+from pathlib import Path
+
+APP_NAME = "Quick Notes"
+
+# ------------------------------------------------------------------ themes
+BASE_THEMES = {
+    "midnight": {
+        "name": "Midnight", "dark": True,
+        "bg": "#141518", "side": "#1b1c20", "hover": "#25272d", "search": "#25272d",
+        "ghost": "#24262c", "ghost_hover": "#2e3138", "fg": "#ececf1", "muted": "#8a8e9b",
+        "accent": "#7c9cff", "danger": "#ff6b7a",
+    },
+    "light": {
+        "name": "Light", "dark": False,
+        "bg": "#ffffff", "side": "#f3f4f7", "hover": "#e7e9ef", "search": "#e7e9ef",
+        "ghost": "#eceef3", "ghost_hover": "#dcdfe6", "fg": "#1c1d22", "muted": "#7a7f8c",
+        "accent": "#4c6fff", "danger": "#d63a4a",
+    },
+    "paper": {
+        "name": "Paper", "dark": False,
+        "bg": "#fbf6ec", "side": "#f1e9d8", "hover": "#e8dcc4", "search": "#e8dcc4",
+        "ghost": "#eadfca", "ghost_hover": "#dfd1b6", "fg": "#3b3226", "muted": "#8c7f6a",
+        "accent": "#b5651d", "danger": "#b3392f",
+    },
+    "forest": {
+        "name": "Forest", "dark": True,
+        "bg": "#101714", "side": "#16201b", "hover": "#1f2c26", "search": "#1f2c26",
+        "ghost": "#1c2822", "ghost_hover": "#26362e", "fg": "#e4efe8", "muted": "#86a091",
+        "accent": "#5fd08a", "danger": "#ff7a7a",
+    },
+    "berry": {
+        "name": "Berry", "dark": True,
+        "bg": "#171321", "side": "#1e1930", "hover": "#2a2342", "search": "#2a2342",
+        "ghost": "#261f3b", "ghost_hover": "#32294d", "fg": "#efe9fb", "muted": "#9d93b8",
+        "accent": "#c792ff", "danger": "#ff7d95",
+    },
+}
+THEME_ORDER = ["midnight", "light", "paper", "forest", "berry"]
+
+ACCENTS = ["#5b8def", "#9b6dff", "#2fbf71", "#ff9f43", "#ff5d8f", "#17b8c9"]
+
+SIZES = {
+    "small": ("Small", 11), "medium": ("Medium", 12),
+    "large": ("Large", 14), "xlarge": ("Extra large", 16),
+}
+
+FONT_CANDIDATES = ["Segoe UI", "Calibri", "Candara", "Arial", "Verdana", "Tahoma",
+                   "Trebuchet MS", "Cambria", "Georgia", "Palatino Linotype",
+                   "Times New Roman", "Consolas", "Courier New", "Comic Sans MS"]
+
+DEFAULTS = {"theme": "midnight", "accent": "default", "font": "Segoe UI",
+            "size": "medium", "start": "home", "on_top": False}
+
+PLACEHOLDER = "Search your notes"
+DELETE_LABEL = "Delete note"
+DELETE_CONFIRM = "Click again to delete"
+
+
+# ----------------------------------------------------------------- colours
+def _rgb(h: str):
+    h = h.lstrip("#")
+    return tuple(int(h[i:i + 2], 16) for i in (0, 2, 4))
+
+
+def mix(a: str, b: str, t: float) -> str:
+    ra, rb = _rgb(a), _rgb(b)
+    return "#%02x%02x%02x" % tuple(round(x + (y - x) * t) for x, y in zip(ra, rb))
+
+
+def luminance(h: str) -> float:
+    def f(v):
+        v /= 255
+        return v / 12.92 if v <= 0.03928 else ((v + 0.055) / 1.055) ** 2.4
+    r, g, b = _rgb(h)
+    return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b)
+
+
+def readable_on(bg: str) -> str:
+    dark = "#0e1224"... (6 KB left)
